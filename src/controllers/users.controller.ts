@@ -1,4 +1,6 @@
-import { Request, Response } from 'express';
+import config from '../config';
+import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import UserModel from '../models/user.model';
 const userModel = new UserModel();
 // CREATE USER END POINT
@@ -63,4 +65,35 @@ const DeleteUser = async (req: Request, res: Response) => {
   }
 };
 
-export { CreateUser, GetAllUsers, GetUser, UpdateUser, DeleteUser };
+const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+    const user = await userModel.authentication(email, password);
+    const token = jwt.sign({ user }, config.tokensecret as unknown as string);
+    if (!user) {
+      return res
+        .status(401)
+        .json({ status: 'error', message: 'wrong username or password ' });
+    }
+    return res.json({
+      status: 'success',
+      data: { ...user, token },
+      meesage: 'user authenticated successfully',
+    });
+  } catch (error) {
+    res.send(error);
+  }
+};
+jwt;
+export {
+  CreateUser,
+  GetAllUsers,
+  GetUser,
+  UpdateUser,
+  DeleteUser,
+  authenticate,
+};

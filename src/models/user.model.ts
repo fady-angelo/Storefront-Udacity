@@ -83,5 +83,30 @@ class UserModel {
       throw new Error('unable to delete users');
     }
   }
+  async authentication(email: string, password: string): Promise<User | null> {
+    try {
+      const connection = await db.connect();
+      const sql = `SELECT password FROM users WHERE id=($1)`;
+      const results = await connection.query(sql, [email]);
+      if (results.rows.length) {
+        const { password: hashpassword } = results.rows[0];
+        const ValidPassword = bcrypt.compareSync(
+          `${password}${config.pepper}`,
+          hashpassword
+        );
+        if (ValidPassword) {
+          const userinfo = await connection.query(
+            `SELECT id,email,user_name,first_name,last_name FROM users WHERE id=($1)`,
+            [email]
+          );
+          return userinfo.rows[0];
+        }
+      }
+      connection.release();
+      return null;
+    } catch (error) {
+      throw new Error('unable to get user token');
+    }
+  }
 }
 export default UserModel;
