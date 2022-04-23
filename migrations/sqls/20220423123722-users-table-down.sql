@@ -1,0 +1,3 @@
+-- Drop USERS TABLE 
+
+DROP TABLE USERS;
